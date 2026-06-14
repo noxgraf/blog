@@ -1,0 +1,143 @@
+<!DOCTYPE html>
+<html lang="en">
+<head><script src="/blog/livereload.js?mindelay=10&amp;v=2&amp;port=1313&amp;path=blog/livereload" data-no-instant defer></script>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>OSINT on a Budget: Recon Techniques That Actually Work · Thiago Graeff</title>
+  <meta name="description" content="Practical OSINT methodology for penetration testers — passive recon, subdomain enumeration, and correlating data without burning through API credits." />
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@tabler/icons-webfont@latest/dist/tabler-icons.min.css" />
+  <link rel="stylesheet" href="http://localhost:1313/blog/css/main.css" />
+</head>
+<body>
+  <header class="topbar">
+  <div class="topbar-left">
+    <span class="live-dot"></span>
+    <span class="live-txt">ONLINE</span>
+    <span class="sep">·</span>
+    <a class="topbar-home" href="https://noxgraf.github.io/blog">
+      <i class="ti ti-arrow-left"></i> Thiago Graeff
+    </a>
+  </div>
+  <nav class="topbar-nav">
+    <a href="http://localhost:1313/blog/search"><i class="ti ti-search"></i></a>
+  </nav>
+</header>
+
+  <main class="main">
+    
+<article class="post">
+
+  <header class="post-header">
+    <p class="eyebrow">// 2024-05-15</p>
+    <h1 class="post-title">OSINT on a Budget: Recon Techniques That Actually Work</h1>
+    <p class="post-desc">Practical OSINT methodology for penetration testers — passive recon, subdomain enumeration, and correlating data without burning through API credits.</p>
+
+    <div class="post-meta">
+      <span class="reading-time"><i class="ti ti-clock"></i> 2 min read</span>
+      
+      <a class="ptag" href="/tags/osint">#osint</a>
+      
+      <a class="ptag" href="/tags/recon">#recon</a>
+      
+      <a class="ptag" href="/tags/methodology">#methodology</a>
+      
+      <a class="ptag" href="/tags/tools">#tools</a>
+      
+    </div>
+  </header>
+
+  <div class="post-content">
+    <h2 id="why-osint-matters-before-you-touch-a-single-port">Why OSINT Matters Before You Touch a Single Port</h2>
+<p>Reconnaissance is the phase most people rush. That&rsquo;s a mistake.</p>
+<p>The more you know before sending a single packet, the quieter your footprint — and the better your attack surface map.</p>
+<h2 id="passive-recon-stack">Passive Recon Stack</h2>
+<p>These are the tools I run on every engagement before active scanning:</p>
+<div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#282a36;-moz-tab-size:4;-o-tab-size:4;tab-size:4;-webkit-text-size-adjust:none;"><code class="language-bash" data-lang="bash"><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">1</span><span><span style="color:#6272a4"># Certificate transparency — free, no auth needed</span>
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">2</span><span>curl <span style="color:#f1fa8c">&#34;https://crt.sh/?q=%25.target.com&amp;output=json&#34;</span> | jq <span style="color:#f1fa8c">&#39;.[].name_value&#39;</span> | sort -u
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">3</span><span>
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">4</span><span><span style="color:#6272a4"># Wayback Machine URLs</span>
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">5</span><span>waybackurls target.com | grep <span style="color:#f1fa8c">&#34;\.php\|\.asp\|admin\|login&#34;</span>
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">6</span><span>
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">7</span><span><span style="color:#6272a4"># GitHub dorking</span>
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">8</span><span>gh search code <span style="color:#f1fa8c">&#34;target.com&#34;</span> --language<span style="color:#ff79c6">=</span>python
+</span></span></code></pre></div><h2 id="subdomain-enumeration">Subdomain Enumeration</h2>
+<p>Passive first, then active:</p>
+<div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#282a36;-moz-tab-size:4;-o-tab-size:4;tab-size:4;-webkit-text-size-adjust:none;"><code class="language-bash" data-lang="bash"><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">1</span><span><span style="color:#6272a4"># Passive (no direct contact with target)</span>
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">2</span><span>subfinder -d target.com -silent
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">3</span><span>
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">4</span><span><span style="color:#6272a4"># DNS bruteforce (active — only when authorized)</span>
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">5</span><span>ffuf -w /usr/share/seclists/Discovery/DNS/subdomains-top1million-5000.txt <span style="color:#f1fa8c">\
+</span></span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">6</span><span>     -u https://FUZZ.target.com -mc 200,301,302
+</span></span></code></pre></div><blockquote>
+<p><strong>OpSec tip:</strong> Use a VPS you don&rsquo;t care about for active scans. Keep your personal IP out of target logs.</p>
+</blockquote>
+<h2 id="correlating-the-data">Correlating the Data</h2>
+<p>Raw lists of subdomains aren&rsquo;t useful. The goal is finding:</p>
+<ul>
+<li>Dev/staging environments with weaker controls</li>
+<li>Forgotten services running old software</li>
+<li>Infrastructure that reveals cloud provider and region</li>
+</ul>
+<p>I pipe everything into a simple SQLite DB and query patterns. More on that in a future post.</p>
+<h2 id="tooling-i-actually-use">Tooling I Actually Use</h2>
+<table>
+  <thead>
+      <tr>
+          <th>Tool</th>
+          <th>Purpose</th>
+          <th>Free?</th>
+      </tr>
+  </thead>
+  <tbody>
+      <tr>
+          <td><code>subfinder</code></td>
+          <td>Passive subdomain enum</td>
+          <td>✓</td>
+      </tr>
+      <tr>
+          <td><code>httpx</code></td>
+          <td>Probe live hosts</td>
+          <td>✓</td>
+      </tr>
+      <tr>
+          <td><code>nuclei</code></td>
+          <td>Template-based scanning</td>
+          <td>✓</td>
+      </tr>
+      <tr>
+          <td><code>shodan</code></td>
+          <td>Internet-wide search</td>
+          <td>Freemium</td>
+      </tr>
+      <tr>
+          <td><code>amass</code></td>
+          <td>Full attack surface mapping</td>
+          <td>✓</td>
+      </tr>
+  </tbody>
+</table>
+<h2 id="closing-thoughts">Closing Thoughts</h2>
+<p>Good recon takes time. Budget it properly in your methodology — rushing it is how you miss the easy win that was sitting on a forgotten subdomain the whole time.</p>
+
+  </div>
+
+  <nav class="post-nav">
+    <span></span>
+    
+    <a class="post-nav-btn post-nav-btn--right" href="http://localhost:1313/blog/posts/htb-machinename-writeup/">
+      <span>HTB: Machine Name — Writeup</span>
+      <i class="ti ti-arrow-right"></i>
+    </a>
+    
+  </nav>
+
+</article>
+
+  </main>
+  <footer class="footer">
+  <span>Thiago Graeff · 2026</span>
+  <span class="footer-status">● src on <a href="https://github.com/noxgraf" target="_blank" rel="noopener">github</a></span>
+</footer>
+
+</body>
+</html>

