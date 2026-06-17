@@ -626,3 +626,83 @@ mark {
 .post-content h4 {
   scroll-margin-top: 60px;
 }
+
+
+.floating-toc {
+  position: fixed;
+  top: 120px;       /* Alinhado abaixo da sua topbar sticky */
+  right: 40px;       /* Distância elegante da borda esquerda */
+  width: 240px;     /* Uma largura confortável para os links mono */
+  z-index: 90;      /* Fica logo abaixo da sua topbar (que é z-index 100) */
+  
+  max-height: calc(100vh - 180px);
+  overflow-y: auto;
+  
+  /* Usando os blocos escuros e bordas sutis do seu próprio tema */
+  background: var(--bg2);
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  padding: 20px;
+
+  right: calc((50% - (var(--content-w) / 2)) / 2 - (240px / 2));
+}
+
+/* Título "No artigo" ou similar */
+.floating-toc h3 {
+  font-family: var(--mono);
+  font-size: 14px;
+  color: var(--amber); /* Tom âmbar combinando com suas tags/eyebrow */
+  letter-spacing: 1.5px;
+  text-transform: uppercase;
+  margin-bottom: 16px;
+  border-bottom: 1px solid var(--border);
+  padding-bottom: 6px;
+}
+
+/* Estrutura das listas geradas pelo Hugo */
+.floating-toc nav ul {
+  list-style: none;
+  padding-left: 0;
+  margin: 0;
+}
+
+/* Recuo para subitens (H3, H4) se houver */
+.floating-toc nav ul ul {
+  padding-left: 12px;
+  margin-top: 4px;
+}
+
+.floating-toc nav li {
+  margin-bottom: 8px;
+  line-height: 1.6;
+}
+
+/* Estilo dos Links da TOC */
+.floating-toc a {
+  font-family: var(--mono);
+  font-size: 13px;
+  color: var(--text-muted); /* Começa discretinho */
+  letter-spacing: 0.3px;
+  display: inline-block;
+  transition: color .15s, padding-left .15s;
+}
+
+/* Efeito Hover padrão do seu tema */
+.floating-toc a:hover {
+  color: var(--blue);
+  text-decoration: none;
+  padding-left: 4px; /* Pequeno slide para a direita igual seus post cards */
+}
+
+/* Se você usar aquele Script para destacar onde o usuário está lendo: */
+.floating-toc a.active {
+  color: var(--green) !important; /* Destaca em verde neon quando ativo */
+  font-weight: 600;
+}
+
+/* Sumir com estilo em telas menores para não atropelar o post de 720px */
+@media (max-width: 1340px) {
+  .floating-toc {
+    display: none;
+  }
+}
