@@ -348,6 +348,9 @@ a.ptag:hover { color: var(--blue); text-decoration: none; }
   border-radius: 6px;
   border: 1px solid var(--border);
   margin: 1em 0;
+  display: block;
+  margin-left: auto;
+  margin-right: auto;
 }
 
 .post-nav {
@@ -705,4 +708,50 @@ mark {
   .floating-toc {
     display: none;
   }
+}
+
+
+/* modal img */
+.lightbox-overlay {
+    display: none;
+    position: fixed;
+    inset: 0;
+    background: rgba(0,0,0,0.85);
+    z-index: 999;
+    justify-content: center;
+    align-items: center;
+    cursor: zoom-out;
+}
+.lightbox-overlay.active {
+    display: flex;
+}
+.lightbox-overlay img {
+    max-width: 90vw;
+    max-height: 90vh;
+    border-radius: 8px;
+    box-shadow: 0 0 40px rgba(0,0,0,0.6);
+}
+.post-content img {
+    cursor: zoom-in;
+}
+
+/* codeblocks copy */
+.copy-btn {
+    position: absolute;
+    top: 10px;
+    right: 10px;
+    font-family: var(--mono);
+    font-size: 11px;
+    padding: 3px 10px;
+    border-radius: 4px;
+    border: 1px solid var(--border);
+    background: var(--bg3);
+    color: var(--muted2);
+    cursor: pointer;
+    transition: color 0.2s, border-color 0.2s;
+}
+
+.copy-btn:hover {
+    color: var(--blue2);
+    border-color: var(--border2);
 }
